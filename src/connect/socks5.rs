@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use anyhow::Context;
-use async_net::{Ipv4Addr, SocketAddr, SocketAddrV4};
+use async_net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV4};
 use futures_util::TryFutureExt;
 use psl::Psl;
 use smol_timeout::TimeoutExt;
@@ -16,11 +16,14 @@ async fn handle_socks5(s5client: smol::net::TcpStream, exclude_prc: bool) -> any
     write_auth_method(s5client.clone(), SocksV5AuthMethod::Noauth).await?;
     let request = read_request(s5client.clone()).await?;
     let port = request.port;
-    let v4addr: Option<Ipv4Addr>;
+    let mut v4addr: Option<Ipv4Addr> = None;
     let addr: String = match &request.host {
         SocksV5Host::Domain(dom) => {
             v4addr = String::from_utf8_lossy(dom).parse().ok();
             format!("{}:{}", String::from_utf8_lossy(dom), request.port)
+        }
+        SocksV5Host::Ipv6(v6) => {
+            format!("{}:{}", Ipv6Addr::from(*v6), request.port)
         }
         SocksV5Host::Ipv4(v4) => {
             let v4addr_inner = Ipv4Addr::new(v4[0], v4[1], v4[2], v4[3]);

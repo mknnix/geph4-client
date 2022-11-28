@@ -8,8 +8,8 @@ use treebitmap::IpLookupTable;
 
 /// List of all Chinese domains.
 static DOMAINS: Lazy<HashSet<String>> = Lazy::new(|| {
-    let ss = include_str!("china-domains.txt");
-    ss.split('\n')
+    let ss: () = include_str!("china-domains.json");
+    serde_json::from_str(ss).unwrap()
         .filter(|v| v.len() > 1)
         .map(|v| v.to_string())
         .collect()
