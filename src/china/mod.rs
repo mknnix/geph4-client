@@ -6,13 +6,21 @@ use http_types::{Method, Request, Url};
 use once_cell::sync::Lazy;
 use treebitmap::IpLookupTable;
 
+const FMT_JSON: bool = true;
+
 /// List of all Chinese domains.
 static DOMAINS: Lazy<HashSet<String>> = Lazy::new(|| {
-    let ss: () = include_str!("china-domains.json");
-    serde_json::from_str(ss).unwrap()
-        .filter(|v| v.len() > 1)
-        .map(|v| v.to_string())
-        .collect()
+    if FMT_JSON {
+        let ss = include_str!("china-domains.json");
+        let names: HashSet<String> = serde_json::from_str(ss).unwrap().filter(|v| v.len() > 1).into();
+        names
+    } else {
+        let ss = include_str!("china-domains.txt");
+        ss.split_ascii_whitespace()
+            .filter(|v| v.len() > 1)
+            .map(|v| v.to_string())
+            .collect()
+    }
 });
 
 static IPLOOKUP: Lazy<IpLookupTable<Ipv4Addr, ()>> = Lazy::new(|| {
